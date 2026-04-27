@@ -23,7 +23,7 @@ services:
       - db
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.apms-api.rule=Host('apms.pro') && PathPrefix('/api')"
+      - "traefik.http.routers.apms-api.rule=Host(\"apms.pro\") && PathPrefix(\"/api\")"
       - "traefik.http.services.apms-api.loadbalancer.server.port=5000"
     networks:
       - default
@@ -39,7 +39,7 @@ services:
       - server
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.apms-web.rule=Host('apms.pro')"
+      - "traefik.http.routers.apms-web.rule=Host(\"apms.pro\")"
       - "traefik.http.services.apms-web.loadbalancer.server.port=3000"
     networks:
       - default
