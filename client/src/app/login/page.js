@@ -64,7 +64,7 @@ export default function LoginPage() {
             <label style={{ fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <input type="checkbox" style={{ width: 'auto' }} /> Remember me
             </label>
-            <a href="#" style={{ fontSize: '0.875rem' }}>Forgot password?</a>
+            <a href="mailto:support@apms.pro" style={{ fontSize: '0.875rem' }}>Forgot password?</a>
           </div>
 
           <button 
@@ -78,7 +78,7 @@ export default function LoginPage() {
         </form>
 
         <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          Don't have an account? <a href="#">Contact Support</a>
+          Don't have an account? <a href="mailto:support@apms.pro">Contact Support</a>
         </div>
       </div>
     </div>
