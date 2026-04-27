@@ -16,7 +16,7 @@ export default function DashboardPage() {
         });
         const data = await res.json();
         if (res.ok) {
-          setWorkOrders(data);
+          setWorkOrders(Array.isArray(data) ? data : []);
         }
       } catch (error) {
         console.error('Dashboard fetch error:', error);
@@ -27,31 +27,33 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, []);
 
+  const safeWorkOrders = Array.isArray(workOrders) ? workOrders : [];
+
   const stats = [
     { 
       title: 'Open Work Orders', 
-      value: workOrders.filter(wo => !['COMPLETED', 'CLOSED', 'CANCELLED'].includes(wo.status)).length, 
+      value: safeWorkOrders.filter(wo => !['COMPLETED', 'CLOSED', 'CANCELLED'].includes(wo.status)).length, 
       change: 'Active tickets', 
       color: 'var(--primary)', 
       icon: '🔧' 
     },
     { 
       title: 'New Requests', 
-      value: workOrders.filter(wo => wo.status === 'SUBMITTED').length, 
+      value: safeWorkOrders.filter(wo => wo.status === 'SUBMITTED').length, 
       change: 'Awaiting review', 
       color: 'var(--secondary)', 
       icon: '✨' 
     },
     { 
       title: 'Emergency Jobs', 
-      value: workOrders.filter(wo => wo.priority === 'EMERGENCY' && wo.status !== 'CLOSED').length, 
+      value: safeWorkOrders.filter(wo => wo.priority === 'EMERGENCY' && wo.status !== 'CLOSED').length, 
       change: 'Critical attention', 
       color: 'var(--accent)', 
       icon: '🚨' 
     },
     { 
       title: 'Total Managed', 
-      value: workOrders.length, 
+      value: safeWorkOrders.length, 
       change: 'Lifetime volume', 
       color: '#10b981', 
       icon: '📊' 
