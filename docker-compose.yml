@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: apms-db
+    restart: always
+    environment:
+      POSTGRES_USER: apms_user
+      POSTGRES_PASSWORD: apms_password
+      POSTGRES_DB: apms_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  server:
+    build: ./server
+    container_name: apms-server
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://apms_user:apms_password@db:5432/apms_db
+      JWT_SECRET: your_vibrant_secret_key_123!
+      PORT: 5000
+      NEXT_PUBLIC_API_URL: https://apms.pro/api/v1
+    depends_on:
+      - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.apms-api.rule=Host(`apms.pro`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.apms-api.entrypoints=websecure"
+      - "traefik.http.routers.apms-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.apms-api.loadbalancer.server.port=5000"
+    networks:
+      - default
+      - traefik-proxy
+
+  client:
+    build: ./client
+    container_name: apms-client
+    restart: always
+    environment:
+      NEXT_PUBLIC_API_URL: https://apms.pro/api/v1
+    depends_on:
+      - server
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.apms-web.rule=Host(`apms.pro`)"
+      - "traefik.http.routers.apms-web.entrypoints=websecure"
+      - "traefik.http.routers.apms-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.apms-web.loadbalancer.server.port=3000"
+    networks:
+      - default
+      - traefik-proxy
+
+volumes:
+  postgres_data:
+
+networks:
+  traefik-proxy:
+    external: true

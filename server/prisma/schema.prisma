@@ -1,0 +1,390 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PROVIDER_ADMIN
+  CLIENT_OWNER
+  TENANT
+  TECHNICIAN
+  VENDOR
+}
+
+enum WorkOrderStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  ASSIGNED
+  SCHEDULED
+  IN_PROGRESS
+  WAITING_PARTS
+  WAITING_TENANT
+  WAITING_VENDOR
+  COMPLETED
+  PENDING_CONFIRMATION
+  CLOSED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+enum VisibilityType {
+  TENANT_VISIBLE
+  CLIENT_VISIBLE
+  VENDOR_VISIBLE
+  INTERNAL
+}
+
+enum ApprovalStatus {
+  NOT_REQUIRED
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  APPROVED
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  firstName     String
+  lastName      String
+  role          UserRole
+  clientId      String?   // For Client Owners
+  phone         String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  client        Client?   @relation(fields: [clientId], references: [id])
+  tenant        Tenant?
+  technician    Technician?
+  vendor        Vendor?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+  messages      WorkOrderMessage[]
+  files         WorkOrderFile[]
+}
+
+model Client {
+  id                      String    @id @default(uuid())
+  name                    String
+  billingEmail            String
+  phone                   String?
+  address                 String?
+  defaultApprovalThreshold Float    @default(500.0)
+  emergencyApprovalLimit  Float     @default(1000.0)
+  isActive                Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  users             User[]
+  properties        Property[]
+  workOrders        WorkOrder[]
+  invoices          Invoice[]
+  contacts          ClientContact[]
+  approvalRules     ApprovalRule[]
+}
+
+model ClientContact {
+  id        String  @id @default(uuid())
+  clientId  String
+  name      String
+  email     String
+  phone     String?
+  role      String? // e.g., Billing, Main Contact
+
+  client    Client  @relation(fields: [clientId], references: [id])
+}
+
+model Property {
+  id               String    @id @default(uuid())
+  clientId         String
+  name             String
+  address          String
+  type             String?   // e.g., Apartment, Townhouse
+  emergencyContact String?
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  client     Client     @relation(fields: [clientId], references: [id])
+  buildings  Building[]
+  workOrders WorkOrder[]
+}
+
+model Building {
+  id         String   @id @default(uuid())
+  propertyId String
+  name       String   // e.g., Bldg A
+  createdAt  DateTime @default(now())
+
+  property   Property @relation(fields: [propertyId], references: [id])
+  units      Unit[]
+}
+
+model Unit {
+  id         String   @id @default(uuid())
+  buildingId String
+  number     String
+  floor      Int?
+  bedrooms   Int?
+  bathrooms  Float?
+  occupancyStatus String? // Vacant, Occupied
+  accessNotes String?
+
+  building   Building    @relation(fields: [buildingId], references: [id])
+  tenants    Tenant[]
+  workOrders WorkOrder[]
+}
+
+model Tenant {
+  id           String  @id @default(uuid())
+  userId       String  @unique
+  unitId       String
+  contactPref  String? // Email, SMS, Phone
+  isActive     Boolean @default(true)
+
+  user         User    @relation(fields: [userId], references: [id])
+  unit         Unit    @relation(fields: [unitId], references: [id])
+  workOrders   WorkOrder[]
+}
+
+model Technician {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  specialty   String?
+  skills      String?
+  isActive    Boolean  @default(true)
+
+  user        User     @relation(fields: [userId], references: [id])
+  assignments WorkOrderAssignment[]
+}
+
+model Vendor {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  companyName String
+  specialty   String?
+  isActive    Boolean  @default(true)
+
+  user        User     @relation(fields: [userId], references: [id])
+  assignments WorkOrderAssignment[]
+}
+
+model WorkOrder {
+  id              String          @id @default(uuid())
+  number          Int             @unique @default(autoincrement())
+  clientId        String
+  propertyId      String
+  unitId          String?
+  tenantId        String?
+  categoryId      String?
+  status          WorkOrderStatus @default(SUBMITTED)
+  priority        Priority        @default(MEDIUM)
+  title           String
+  description     String
+  permissionToEnter Boolean       @default(false)
+  accessNotes      String?
+  scheduledAt      DateTime?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  closedAt         DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  client           Client           @relation(fields: [clientId], references: [id])
+  property         Property         @relation(fields: [propertyId], references: [id])
+  unit             Unit?            @relation(fields: [unitId], references: [id])
+  tenant           Tenant?          @relation(fields: [tenantId], references: [id])
+  category         MaintenanceCategory? @relation(fields: [categoryId], references: [id])
+  assignments      WorkOrderAssignment[]
+  messages         WorkOrderMessage[]
+  files            WorkOrderFile[]
+  statusHistory    WorkOrderStatusHistory[]
+  costs            WorkOrderCost[]
+  estimates        Estimate[]
+  invoiceLineItems InvoiceLineItem[]
+}
+
+model WorkOrderAssignment {
+  id            String   @id @default(uuid())
+  workOrderId   String
+  technicianId  String?
+  vendorId      String?
+  assignedAt    DateTime @default(now())
+
+  workOrder     WorkOrder   @relation(fields: [workOrderId], references: [id])
+  technician    Technician? @relation(fields: [technicianId], references: [id])
+  vendor        Vendor?     @relation(fields: [vendorId], references: [id])
+}
+
+model WorkOrderMessage {
+  id          String         @id @default(uuid())
+  workOrderId String
+  userId      String
+  content     String
+  visibility  VisibilityType @default(INTERNAL)
+  createdAt   DateTime       @default(now())
+
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+model WorkOrderFile {
+  id          String         @id @default(uuid())
+  workOrderId String
+  userId      String
+  fileUrl     String
+  fileType    String?
+  visibility  VisibilityType @default(INTERNAL)
+  caption     String?
+  createdAt   DateTime       @default(now())
+
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+model WorkOrderStatusHistory {
+  id          String          @id @default(uuid())
+  workOrderId String
+  status      WorkOrderStatus
+  note        String?
+  changedBy   String?
+  createdAt   DateTime        @default(now())
+
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+}
+
+model WorkOrderCost {
+  id          String   @id @default(uuid())
+  workOrderId String
+  type        String   // Labor, Material, Vendor, Markup, Trip, Emergency, Tax
+  amount      Float
+  description String?
+  createdAt   DateTime @default(now())
+
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+}
+
+model Estimate {
+  id             String         @id @default(uuid())
+  workOrderId    String
+  amount         Float
+  description    String
+  approvalStatus ApprovalStatus @default(PENDING)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  workOrder      WorkOrder @relation(fields: [workOrderId], references: [id])
+  approvals      Approval[]
+}
+
+model Approval {
+  id          String   @id @default(uuid())
+  estimateId  String
+  userId      String
+  action      String   // APPROVE, REJECT
+  note        String?
+  createdAt   DateTime @default(now())
+
+  estimate    Estimate @relation(fields: [estimateId], references: [id])
+}
+
+model Invoice {
+  id          String        @id @default(uuid())
+  clientId    String
+  number      Int           @unique @default(autoincrement())
+  status      InvoiceStatus @default(DRAFT)
+  dueDate     DateTime?
+  totalAmount Float         @default(0.0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  client      Client            @relation(fields: [clientId], references: [id])
+  lineItems   InvoiceLineItem[]
+  payments    Payment[]
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  workOrderId String?
+  description String
+  amount      Float
+  createdAt   DateTime @default(now())
+
+  invoice     Invoice    @relation(fields: [invoiceId], references: [id])
+  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id])
+}
+
+model Payment {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  amount      Float
+  method      String?  // Credit Card, ACH, Check
+  reference   String?
+  paidAt      DateTime @default(now())
+
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String
+  oldValue    Json?
+  newValue    Json?
+  timestamp   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
+model MaintenanceCategory {
+  id    String @id @default(uuid())
+  name  String @unique
+
+  workOrders WorkOrder[]
+}
+
+model ApprovalRule {
+  id                  String @id @default(uuid())
+  clientId            String
+  threshold           Float
+  emergencyLimit      Float
+  requiresApproval    Boolean @default(true)
+
+  client              Client @relation(fields: [clientId], references: [id])
+}

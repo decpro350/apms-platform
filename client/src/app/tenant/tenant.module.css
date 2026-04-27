@@ -1,0 +1,140 @@
+.container {
+  min-height: 100vh;
+  background-color: var(--background);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.userNav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.875rem;
+}
+
+.logoutBtn {
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  padding: 0;
+}
+
+.main {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.welcomeCard {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border-radius: var(--radius);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.welcomeCard h2 {
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.welcomeCard p {
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+}
+
+.welcomeCard button {
+  background: white;
+  color: var(--primary);
+}
+
+.section h3 {
+  font-size: 1.125rem;
+  margin-bottom: 1rem;
+}
+
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge[data-status="In Progress"] {
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary);
+}
+
+.badge[data-status="Completed"] {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.radioLabel, .checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.uploadArea {
+  border: 2px dashed var(--border);
+  padding: 2rem;
+  border-radius: var(--radius);
+  text-align: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadArea:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.mobileNav {
+  display: none;
+  position: sticky;
+  bottom: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 0.75rem;
+  justify-content: space-around;
+}
+
+@media (max-width: 768px) {
+  .mobileNav {
+    display: flex;
+  }
+}

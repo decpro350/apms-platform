@@ -1,0 +1,230 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+}
+
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge[data-priority="HIGH"] { background: rgba(244, 63, 94, 0.1); color: var(--accent); }
+.badge[data-status="In Progress"] { background: rgba(79, 70, 229, 0.1); color: var(--primary); }
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  height: calc(100vh - 250px);
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metaLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.feedCol {
+  height: 100%;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.tabActive {
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary);
+}
+
+.messageList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.message {
+  padding: 1rem;
+  background: var(--background);
+  border-radius: var(--radius);
+  position: relative;
+}
+
+.messageHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.messageUser {
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.messageTime {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.messageContent {
+  font-size: 0.875rem;
+}
+
+.messageType {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: var(--surface);
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+}
+
+.messageInput {
+  border-top: 1px solid var(--border);
+  padding: 1rem;
+}
+
+.visibilityToggle {
+  margin-bottom: 0.5rem;
+}
+
+.select {
+  font-size: 0.75rem;
+  padding: 0.25rem;
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+textarea {
+  flex: 1;
+  resize: none;
+}
+
+.fileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.fileItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filePlaceholder {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--background);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  border: 1px solid var(--border);
+}
+
+.fileName {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  word-break: break-all;
+  text-align: center;
+}
+
+.fileUploadBtn {
+  aspect-ratio: 1;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.costList {
+  margin-top: 1rem;
+}
+
+.costItem {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.costDivider {
+  height: 1px;
+  background: var(--border);
+  margin: 1rem 0;
+}
+
+.costTotal {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+@media (max-width: 1024px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+}
