@@ -51,17 +51,25 @@ const createPayment = async (req, res) => {
     const payment = await prisma.payment.create({
       data: {
         invoiceId,
-        amount,
+        amount: parseFloat(amount),
         method,
         reference
       }
     });
 
-    // Update invoice status if fully paid (simple logic for now)
-    await prisma.invoice.update({
-      where: { id: invoiceId },
-      data: { status: 'PAID' }
+    // Check if fully paid
+    const allPayments = await prisma.payment.findMany({
+      where: { invoiceId }
     });
+
+    const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
+
+    if (totalPaid >= invoice.totalAmount) {
+      await prisma.invoice.update({
+        where: { id: invoiceId },
+        data: { status: 'PAID' }
+      });
+    }
 
     res.status(201).json(payment);
   } catch (error) {

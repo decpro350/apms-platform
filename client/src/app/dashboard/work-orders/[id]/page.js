@@ -1,28 +1,75 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import styles from './workorder.module.css';
 
 export default function WorkOrderDetail({ params }) {
+  const { id } = React.use(params);
   const [activeTab, setActiveTab] = useState('messages');
   const [message, setMessage] = useState('');
   const [visibility, setVisibility] = useState('INTERNAL');
+  const [workOrder, setWorkOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  const workOrder = {
-    id: params.id,
-    title: 'Kitchen Sink Leaking',
-    status: 'In Progress',
-    priority: 'HIGH',
-    property: 'Sunset Gardens',
-    unit: '101A',
-    tenant: 'John Tenant',
-    description: 'The pipe under the kitchen sink is leaking heavily when the water is turned on. Possible crack in the P-trap.',
+  useEffect(() => {
+    const fetchWorkOrder = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/work-orders/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setWorkOrder(data);
+        }
+      } catch (error) {
+        console.error('Error fetching work order:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWorkOrder();
+  }, [id]);
+
+  if (loading) return <div className={styles.container}>Loading...</div>;
+  if (!workOrder) return <div className={styles.container}>Work Order not found</div>;
+
+  const messages = workOrder.messages || [];
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          workOrderId: id,
+          content: message,
+          visibility
+        })
+      });
+
+      if (res.ok) {
+        setMessage('');
+        // Refresh work order to show new message
+        const updatedRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/work-orders/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const updatedData = await updatedRes.json();
+        setWorkOrder(updatedData);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
-
-  const messages = [
-    { id: 1, user: 'APMS Admin', content: 'Technician has been dispatched.', time: '10:15 AM', type: 'INTERNAL' },
-    { id: 2, user: 'John Tech', content: 'Arrived at property. Starting inspection.', time: '10:45 AM', type: 'INTERNAL' },
-    { id: 3, user: 'John Tech', content: 'Initial inspection complete. Need to replace the P-trap.', time: '11:00 AM', type: 'CLIENT_VISIBLE' },
-  ];
 
   return (
     <div className={styles.container}>
@@ -33,8 +80,8 @@ export default function WorkOrderDetail({ params }) {
             <span className={styles.badge} data-priority={workOrder.priority}>{workOrder.priority}</span>
             <span className={styles.badge} data-status={workOrder.status}>{workOrder.status}</span>
           </div>
-          <h2>Ticket #{workOrder.id}: {workOrder.title}</h2>
-          <p style={{ color: 'var(--text-muted)' }}>{workOrder.property} • Unit {workOrder.unit}</p>
+          <h2>Ticket #{workOrder.number || workOrder.id}: {workOrder.title}</h2>
+          <p style={{ color: 'var(--text-muted)' }}>{workOrder.property?.name} • Unit {workOrder.unit?.number}</p>
         </div>
         <div className={styles.actions}>
           <button className="btn-primary">Update Status</button>
@@ -52,11 +99,11 @@ export default function WorkOrderDetail({ params }) {
             <div className={styles.metaGrid}>
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Tenant</span>
-                <span>{workOrder.tenant}</span>
+                <span>{workOrder.tenant?.user ? `${workOrder.tenant.user.firstName} ${workOrder.tenant.user.lastName}` : 'N/A'}</span>
               </div>
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Access</span>
-                <span>Permission to enter: Yes</span>
+                <span>Permission to enter: {workOrder.permissionToEnter ? 'Yes' : 'No'}</span>
               </div>
             </div>
           </div>
@@ -80,18 +127,16 @@ export default function WorkOrderDetail({ params }) {
               <button className="btn-secondary" style={{ fontSize: '0.75rem' }}>+ Add Cost</button>
             </div>
             <div className={styles.costList}>
-              <div className={styles.costItem}>
-                <span>Labor (2 hrs @ $75)</span>
-                <span>$150.00</span>
-              </div>
-              <div className={styles.costItem}>
-                <span>Parts (P-Trap)</span>
-                <span>$45.00</span>
-              </div>
+              {workOrder.costs?.map((cost) => (
+                <div key={cost.id} className={styles.costItem}>
+                  <span>{cost.description || cost.type}</span>
+                  <span>${cost.amount.toFixed(2)}</span>
+                </div>
+              ))}
               <div className={styles.costDivider}></div>
               <div className={styles.costTotal}>
-                <span>Estimated Total</span>
-                <span>$195.00</span>
+                <span>Total Cost</span>
+                <span>${workOrder.costs?.reduce((sum, c) => sum + c.amount, 0).toFixed(2) || '0.00'}</span>
               </div>
             </div>
           </div>
@@ -119,11 +164,11 @@ export default function WorkOrderDetail({ params }) {
               {messages.map((msg) => (
                 <div key={msg.id} className={styles.message}>
                   <div className={styles.messageHeader}>
-                    <span className={styles.messageUser}>{msg.user}</span>
-                    <span className={styles.messageTime}>{msg.time}</span>
+                    <span className={styles.messageUser}>{msg.user?.firstName} {msg.user?.lastName}</span>
+                    <span className={styles.messageTime}>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                   <p className={styles.messageContent}>{msg.content}</p>
-                  <span className={styles.messageType}>{msg.type.replace('_', ' ')}</span>
+                  <span className={styles.messageType} data-type={msg.visibility}>{msg.visibility?.replace('_', ' ')}</span>
                 </div>
               ))}
             </div>
@@ -148,7 +193,7 @@ export default function WorkOrderDetail({ params }) {
                   onChange={(e) => setMessage(e.target.value)}
                   rows="2"
                 />
-                <button className="btn-primary">Send</button>
+                <button className="btn-primary" onClick={handleSendMessage}>Send</button>
               </div>
             </div>
           </div>

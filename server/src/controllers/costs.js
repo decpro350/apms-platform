@@ -17,12 +17,14 @@ const getWorkOrderCosts = async (req, res) => {
     // total = subtotal + tax
 
     const summary = costs.reduce((acc, cost) => {
-      acc.subtotal += cost.amount;
+      const amount = parseFloat(cost.amount);
       if (cost.type.toLowerCase() === 'tax') {
-        acc.tax += cost.amount;
+        acc.tax += amount;
+      } else {
+        acc.subtotal += amount;
       }
       return acc;
-    }, { subtotal: 0, tax: 0, total: 0 });
+    }, { subtotal: 0, tax: 0 });
 
     summary.total = summary.subtotal + summary.tax;
 

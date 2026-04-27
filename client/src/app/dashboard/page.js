@@ -1,13 +1,61 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import styles from './page.module.css';
 
 export default function DashboardPage() {
+  const [workOrders, setWorkOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/work-orders`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setWorkOrders(data);
+        }
+      } catch (error) {
+        console.error('Dashboard fetch error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
+
   const stats = [
-    { title: 'Open Work Orders', value: '42', change: '+5 from yesterday', color: 'var(--primary)', icon: '🔧' },
-    { title: 'New Requests', value: '12', change: '8 pending review', color: 'var(--secondary)', icon: '✨' },
-    { title: 'Emergency Jobs', value: '3', change: 'All dispatched', color: 'var(--accent)', icon: '🚨' },
-    { title: 'Billable (MTD)', value: '$12,450', change: '+12% vs last month', color: '#10b981', icon: '💰' },
+    { 
+      title: 'Open Work Orders', 
+      value: workOrders.filter(wo => !['COMPLETED', 'CLOSED', 'CANCELLED'].includes(wo.status)).length, 
+      change: 'Active tickets', 
+      color: 'var(--primary)', 
+      icon: '🔧' 
+    },
+    { 
+      title: 'New Requests', 
+      value: workOrders.filter(wo => wo.status === 'SUBMITTED').length, 
+      change: 'Awaiting review', 
+      color: 'var(--secondary)', 
+      icon: '✨' 
+    },
+    { 
+      title: 'Emergency Jobs', 
+      value: workOrders.filter(wo => wo.priority === 'EMERGENCY' && wo.status !== 'CLOSED').length, 
+      change: 'Critical attention', 
+      color: 'var(--accent)', 
+      icon: '🚨' 
+    },
+    { 
+      title: 'Total Managed', 
+      value: workOrders.length, 
+      change: 'Lifetime volume', 
+      color: '#10b981', 
+      icon: '📊' 
+    },
   ];
 
   return (
@@ -40,13 +88,17 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {[1024, 1025, 1026, 1027].map(id => (
-                  <tr key={id}>
-                    <td>#{id}</td>
-                    <td>Sunrise Apartments</td>
-                    <td>Plumbing</td>
-                    <td><span className={styles.badge}>In Progress</span></td>
-                    <td>Oct 24, 2023</td>
+                {loading ? (
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: '1rem' }}>Loading...</td></tr>
+                ) : workOrders.length === 0 ? (
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: '1rem' }}>No recent activity.</td></tr>
+                ) : workOrders.slice(0, 5).map(wo => (
+                  <tr key={wo.id}>
+                    <td><Link href={`/dashboard/work-orders/${wo.id}`}>#{wo.number || wo.id.substring(0, 5)}</Link></td>
+                    <td>{wo.property?.name || 'N/A'}</td>
+                    <td>{wo.category?.name || 'General'}</td>
+                    <td><span className={styles.badge} data-status={wo.status}>{wo.status}</span></td>
+                    <td>{new Date(wo.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>

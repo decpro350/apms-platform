@@ -15,6 +15,7 @@ const estimateRoutes = require('./routes/estimates');
 const invoiceRoutes = require('./routes/invoices');
 const notificationRoutes = require('./routes/notifications');
 const reportRoutes = require('./routes/reports');
+const workOrderRoutes = require('./routes/workOrders');
 // Import other routes here
 
 const app = express();
@@ -38,6 +39,7 @@ app.use(`${API_V1}/estimates`, estimateRoutes);
 app.use(`${API_V1}/invoices`, invoiceRoutes);
 app.use(`${API_V1}/notifications`, notificationRoutes);
 app.use(`${API_V1}/reports`, reportRoutes);
+app.use(`${API_V1}/work-orders`, workOrderRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
