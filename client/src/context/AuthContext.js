@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
+    console.log("DEBUG: Attempting login to:", `${process.env.NEXT_PUBLIC_API_URL}/auth/login`);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
         method: 'POST',
