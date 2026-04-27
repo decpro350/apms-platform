@@ -21,7 +21,10 @@ const workOrderRoutes = require('./routes/workOrders');
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: ['https://apms.pro', 'http://apms.pro'],
+  credentials: true
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 
